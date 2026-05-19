@@ -4,7 +4,7 @@
 
 ![](./assets/teaser.png)
 
-Official code release for [Matérn Noise for Triangulation-Agnostic Flow Matching on Meshes](https://matern-fm.github.io/), by Tianshu Kuai, Arman Maesumi, Daniel Ritchie, and Noam Aigerman, published in ACM Transactions on Graphics (Proceedings of SIGGRAPH 2026). 
+Official code release for [Matérn Noise for Triangulation-Agnostic Flow Matching on Meshes](https://matern-fm.github.io/), by Tianshu Kuai, Arman Maesumi, Daniel Ritchie, and Noam Aigerman, published in ACM Transactions on Graphics (SIGGRAPH 2026). 
 
 ## Installation
 
