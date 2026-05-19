@@ -1,10 +1,10 @@
 # Matérn Noise for Triangulation-Agnostic Flow Matching on Meshes
 
-### [[Project Page]](link) / [[arXiv]](link) / [[Data]](https://udemontreal-my.sharepoint.com/:f:/g/personal/tianshu_kuai_umontreal_ca/IgDTIysjX7jBQa3RzqXL1TsBAePI1R2l0EUxTkIKThh3CKE?e=bCMkX2) / [[Data Generation Code]](https://github.com/kts707/matern-fm-data)
+### [[Project Page]](https://matern-fm.github.io/) / [[arXiv]](link) / [[Data]](https://udemontreal-my.sharepoint.com/:f:/g/personal/tianshu_kuai_umontreal_ca/IgDTIysjX7jBQa3RzqXL1TsBAePI1R2l0EUxTkIKThh3CKE?e=bCMkX2) / [[Data Generation Code]](https://github.com/kts707/matern-fm-data)
 
 ![](./assets/teaser.png)
 
-Official code release for [Matérn Noise for Triangulation-Agnostic Flow Matching on Meshes](link), by Tianshu Kuai, Arman Maesumi, Daniel Ritchie, and Noam Aigerman, published in ACM Transactions on Graphics (Proceedings of SIGGRAPH 2026). 
+Official code release for [Matérn Noise for Triangulation-Agnostic Flow Matching on Meshes](https://matern-fm.github.io/), by Tianshu Kuai, Arman Maesumi, Daniel Ritchie, and Noam Aigerman, published in ACM Transactions on Graphics (Proceedings of SIGGRAPH 2026). 
 
 ## Installation
 
@@ -70,7 +70,7 @@ bash demo/arbitrary_source_smpl.sh
 ### Datasets
 Download our preprocessed dataset files [here](https://udemontreal-my.sharepoint.com/:f:/g/personal/tianshu_kuai_umontreal_ca/IgDTIysjX7jBQa3RzqXL1TsBAePI1R2l0EUxTkIKThh3CKE?e=bCMkX2) and put them under `data` folder.
 
-If you would like to create the datasets yourself, refer to PoissonNet's instructions on preparing the [SMPL](https://github.com/ArmanMaesumi/poissonnet/tree/master/smplx_data) dataset (yoga poses). We also provide scripts to create datasets by simulating the equilibrium states of an elastic object in this [repository](link). 
+If you would like to create the datasets yourself, refer to PoissonNet's instructions on preparing the [SMPL](https://github.com/ArmanMaesumi/poissonnet/tree/master/smplx_data) dataset (yoga poses). We also provide scripts to create datasets by simulating the equilibrium states of an elastic object in this [repository](https://github.com/kts707/matern-fm-data). 
 
 ### Run training
 All config files are stored in the `configs` folder. They assume training on a single NVIDIA H100 GPU (80 GB VRAM). To fit on a GPU with less VRAM, simply reduce the `batch_size` in the configs and enable gradient accumulation (`accumulate_grad_batches`) to keep the same effective batch size. 
