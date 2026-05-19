@@ -25,10 +25,9 @@ git clone https://github.com/ArmanMaesumi/torch_mesh_ops
 cd torch_mesh_ops && python setup.py install
 cd .. && rm -rf torch_mesh_ops
 
-# install cholespy
-git clone --recursive https://github.com/kts707/cholespy.git
-pip install ./cholespy
-rm -rf ./cholespy
+# install cholespy (official version)
+# This version of the codebase uses the official cholespy package (does not support cholespy solver caching).
+pip install cholespy
 ```
 
 ## Matérn noise sampling

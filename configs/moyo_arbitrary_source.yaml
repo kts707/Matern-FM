@@ -66,10 +66,6 @@ dataset:
   use_subset: False
   subset_percentage: 0.001
 
-  cache_solvers: True
-  cache_segments_num_samples: 3000
-
-  cache_screened_solvers: True
   screening_term: 100.0
 
   use_data_augmentation: True

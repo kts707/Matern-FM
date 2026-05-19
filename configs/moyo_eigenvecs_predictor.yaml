@@ -39,9 +39,6 @@ dataset:
   use_subset: True
   subset_percentage: 0.001
 
-  cache_solvers: True
-  cache_segments_num_samples: 3000
-
   eigenvecs: data/tpose_eigenvectors_normalized.pt
   use_first_k_eigenvec: 64
 

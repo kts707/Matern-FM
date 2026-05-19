@@ -3,7 +3,7 @@ import cholespy
 import torch_mesh_ops as TMO
 
 @torch.no_grad()
-def construct_mesh_operators(V, F, high_precision=False, create_solvers=True):
+def construct_mesh_operators(V, F, high_precision=False):
     '''
     Creates the following operators for a mesh. Uses PyTorch CUDA extension.
     - vertex_mass:  (B, V)      lumped vertex masses
@@ -37,66 +37,6 @@ def construct_mesh_operators(V, F, high_precision=False, create_solvers=True):
     G = G.float()
     M = torch.repeat_interleave(face_areas, 2, dim=-1) # grad operator is interleaved convention, so M is interleaved too
 
-    solvers = None
-    if create_solvers:
-        solvers = []
-        Ls = TMO.cotangent_laplacian_batched(V, F, 1e-10).float() # (b, v, v)
-
-        # Create Cholesky solver for each Laplacian in batch
-        # This could be block-diagonalized, but speedup seems marginal
-        for bi in range(nB):
-            L = Ls[bi]
-            eps = 1e-6
-            sparse_eps_diag = torch.sparse.spdiags(eps * torch.ones(nV), torch.zeros(1, dtype=torch.long), (nV, nV)).to(device)
-            L = L + sparse_eps_diag # (b, v, v)
-            
-            nretry = 0
-            while nretry < 5:
-                try:
-                    nrows = L.shape[-1]
-                    ii = L._indices()[0]
-                    jj = L._indices()[1]
-                    x = L._values()
-                    solver = cholespy.CholeskySolverF(
-                        n_rows=nrows, ii=ii, jj=jj,
-                        x=x, type=cholespy.MatrixType.COO,
-                        pin_memory=True
-                    )
-                    solvers.append(solver)
-                    break
-                except Exception as e:
-                    print(f"Retrying Cholesky solver for mesh {bi} in batch due to error: {e}")
-                    eps = eps * 10.0
-                    sparse_eps_diag = torch.sparse.spdiags(eps * torch.ones(nV), torch.zeros(1, dtype=torch.long), (nV, nV)).to(device)
-                    L = L + sparse_eps_diag
-                    nretry += 1
-            if nretry >= 5:
-                raise RuntimeError(f"Failed to create Cholesky solver for mesh {bi} in batch")
-    return vert_mass, solvers, G, M
-
-
-@torch.no_grad()
-def construct_solvers(V, F, high_precision=False):
-    '''
-    Creates the following operators for a mesh. Uses PyTorch CUDA extension.
-    - solver:       [B,]        list of Cholesky solvers for mesh's cotangent Laplacian
-
-    Optionally set high_precision to True to use double precision in intermediate
-    computations. Note the operators will be returned in float precision regardless.
-    '''
-    # ensure contiguous memory layout before calling CUDA extension
-    V = V.contiguous()
-    F = F.contiguous()
-    if V.ndim == 2:
-        V = V.unsqueeze(0)
-        F = F.unsqueeze(0)
-            
-    if high_precision:
-        V = V.double()
-
-    nB, nV, _ = V.shape
-    device = V.device
-
     solvers = []
     Ls = TMO.cotangent_laplacian_batched(V, F, 1e-10).float() # (b, v, v)
 
@@ -117,10 +57,8 @@ def construct_solvers(V, F, high_precision=False):
                 x = L._values()
                 solver = cholespy.CholeskySolverF(
                     n_rows=nrows, ii=ii, jj=jj,
-                    x=x, type=cholespy.MatrixType.COO,
-                    pin_memory=True
+                    x=x, type=cholespy.MatrixType.COO
                 )
-                solver.to_cpu()
                 solvers.append(solver)
                 break
             except Exception as e:
@@ -131,12 +69,11 @@ def construct_solvers(V, F, high_precision=False):
                 nretry += 1
         if nretry >= 5:
             raise RuntimeError(f"Failed to create Cholesky solver for mesh {bi} in batch")
-    return solvers
-
+    return vert_mass, solvers, G, M
 
 
 @torch.no_grad()
-def construct_screened_solvers(V, F, screening_term=0.0, high_precision=False, to_cpu=True):
+def construct_screened_solvers(V, F, screening_term=0.0, high_precision=False):
     '''
     Creates the following operators for a mesh. Uses PyTorch CUDA extension.
     - solver:       [B,]        list of Cholesky solvers for mesh's cotangent Laplacian
@@ -184,11 +121,8 @@ def construct_screened_solvers(V, F, screening_term=0.0, high_precision=False, t
                 x = L._values()
                 solver = cholespy.CholeskySolverF(
                     n_rows=nrows, ii=ii, jj=jj,
-                    x=x, type=cholespy.MatrixType.COO,
-                    pin_memory=True
+                    x=x, type=cholespy.MatrixType.COO
                 )
-                if to_cpu:
-                    solver.to_cpu()
                 solvers.append(solver)
                 break
             except Exception as e:

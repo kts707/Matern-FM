@@ -101,36 +101,6 @@ class Arbitrary_Source(Dataset):
 
         self.dataset_size = self.deformed_vertices.shape[0]
 
-        # cache solvers
-        self.cache_solvers = configs.get('cache_solvers', False)
-        self.cache_screened_solvers = configs.get('cache_screened_solvers', False)
-        if self.cache_solvers:
-            # create solvers
-            from models.poissonnet.operators import construct_solvers, construct_screened_solvers
-            import tqdm
-            print('Caching solvers for source meshes...')
-            self.solvers = []
-            if self.cache_screened_solvers:
-                self.solvers_screened = []
-                self.screening_term = configs.get('screening_term', 1.0)
-            num_samples = configs.cache_segments_num_samples
-            N = self.source_vertices.shape[0]
-            src_faces_batched = self.faces.unsqueeze(0).repeat(num_samples, 1, 1).cuda()
-            for start in tqdm.tqdm(range(0, N, num_samples)):
-                end = min(start + num_samples, N)
-                src_vertices = self.source_vertices[start:end].cuda()
-                if src_vertices.shape[0] == 0:
-                    continue
-                if src_faces_batched.shape[0] != num_samples:
-                    src_faces_batched = self.faces.unsqueeze(0).repeat(src_vertices.shape[0], 1, 1).cuda()
-                self.solvers += construct_solvers(src_vertices, src_faces_batched, high_precision=True)
-                if self.cache_screened_solvers:
-                    self.solvers_screened += construct_screened_solvers(src_vertices, src_faces_batched, 
-                                                                     self.screening_term, high_precision=True, to_cpu=True)
-            _ = src_vertices.cpu()
-            _ = src_faces_batched.cpu()
-            del src_vertices, src_faces_batched
-
     def __len__(self):
         return self.dataset_size
 
@@ -155,19 +125,7 @@ class Arbitrary_Source(Dataset):
         return verts_src, verts_tar
 
     def collate_fn(self, batch):
-        if self.cache_solvers:
-            collated_data = default_collate(batch)
-            
-            indices = collated_data[2]
-            idx_list = indices.tolist()
-            solvers_list = [self.solvers[i] for i in idx_list]
-            if self.cache_screened_solvers:
-                screened_solvers_list = [self.solvers_screened[i] for i in idx_list]
-                return collated_data, solvers_list, screened_solvers_list
-            else:
-                return collated_data, solvers_list            
-        else:
-            return default_collate(batch)
+        return default_collate(batch)
 
     def sample_random_sources(self, num_samples, device='cuda', saving_dir=None):
         batch_source = []
@@ -239,27 +197,6 @@ class Mesh_to_Eigenvecs(Dataset):
 
         self.dataset_size = self.source_vertices.shape[0]
 
-        self.cache_solvers = configs.get('cache_solvers', False)
-        if self.cache_solvers:
-            # create solvers
-            from models.poissonnet import construct_solvers
-            import tqdm
-            print('Caching solvers for source meshes...')
-            self.solvers = []
-            num_samples = configs.cache_segments_num_samples
-            N = self.source_vertices.shape[0]
-            src_faces_batched = self.faces.unsqueeze(0).repeat(num_samples, 1, 1).cuda()
-            for start in tqdm.tqdm(range(0, N, num_samples)):
-                end = min(start + num_samples, N)
-                src_vertices = self.source_vertices[start:end].cuda()
-                if src_vertices.shape[0] == 0:
-                    continue
-                if src_faces_batched.shape[0] != num_samples:
-                    src_faces_batched = self.faces.unsqueeze(0).repeat(src_vertices.shape[0], 1, 1).cuda()
-                self.solvers += construct_solvers(src_vertices, src_faces_batched, high_precision=True)
-            _ = src_vertices.cpu()
-            _ = src_faces_batched.cpu()
-            del src_vertices, src_faces_batched
 
     def data_augmentation(self, verts_src):
         scale_xyz = torch.rand(1, 1) * 0.6 + 0.7 # (1, 1)
@@ -281,12 +218,4 @@ class Mesh_to_Eigenvecs(Dataset):
         return source_v, self.target_eigenvecs, idx
 
     def collate_fn(self, batch):
-        if self.cache_solvers:
-            collated_data = default_collate(batch)
-            
-            indices = collated_data[2]
-            idx_list = indices.tolist()
-            solvers_list = [self.solvers[i] for i in idx_list]
-            return collated_data, solvers_list
-        else:
-            return default_collate(batch)
+        return default_collate(batch)

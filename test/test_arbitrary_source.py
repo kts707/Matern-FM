@@ -38,8 +38,6 @@ def main():
 
     config.train.batch_size = 1
 
-    config.dataset.cache_solvers = False
-
     device = "cuda"
 
     # set seeds and device

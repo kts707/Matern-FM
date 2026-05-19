@@ -66,8 +66,7 @@ def construct_screened_solvers(V, F, screening_term=0, high_precision=False):
                 x = L._values()
                 solver = cholespy.CholeskySolverF(
                     n_rows=nrows, ii=ii, jj=jj,
-                    x=x, type=cholespy.MatrixType.COO,
-                    pin_memory=True
+                    x=x, type=cholespy.MatrixType.COO
                 )
                 solvers.append(solver)
                 break

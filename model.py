@@ -126,8 +126,7 @@ class Matern_FM(pl.LightningModule):
             self.solver_screened = construct_screened_solvers(
                 self.v_source, self.source_faces_batch,
                 screening_term=self.screening_term,
-                high_precision=True,
-                to_cpu=False
+                high_precision=True
             )
 
     def batchify_operators_poisson_net_fixed_source(self, B, device='cuda'):
@@ -280,8 +279,7 @@ class Matern_FM(pl.LightningModule):
             self.solver_screened = construct_screened_solvers(
                 self.v_source, self.source_faces_batch,
                 screening_term=self.screening_term,
-                high_precision=True,
-                to_cpu=False
+                high_precision=True
             )
 
         with torch.no_grad():
@@ -327,8 +325,7 @@ class Matern_FM(pl.LightningModule):
             self.solver_screened = construct_screened_solvers(
                 self.v_source, self.source_faces_batch,
                 screening_term=self.screening_term,
-                high_precision=True,
-                to_cpu=False
+                high_precision=True
             )
 
 
@@ -341,7 +338,6 @@ class Matern_FM_arbitrary_source(pl.LightningModule):
         self.model_type = model_type
 
         self.outputs_at = config.model.outputs_at
-        self.use_cached_solvers = config.dataset.get('cache_solvers', False)
         self.solver = None
 
         if model_type == 'PoissonNet':
@@ -451,23 +447,23 @@ class Matern_FM_arbitrary_source(pl.LightningModule):
             self.screening_term = x0_dist_config.get('screening_term', 1.0)
             self.solver_screened = None
 
-    def batchify_operators_poisson_net_arbitrary_source(self, B, source_v, apply_to_faces=True, device='cuda', use_cached_solvers=False):
+    def batchify_operators_poisson_net_arbitrary_source(self, B, source_v, apply_to_faces=True, device='cuda'):
 
         if apply_to_faces or self.source_faces_batch.shape[0] != B:
             self.source_faces_batch = batchify_tensor(self.source_faces, B).to(device)
 
         # convert tensors to batched versions
         self.vertex_mass, self.solver, self.G, self.M = construct_mesh_operators(
-            source_v, self.source_faces_batch, high_precision=True, create_solvers=not use_cached_solvers
+            source_v, self.source_faces_batch, high_precision=True
         )
 
-    def batchify_tensors_arbitrary_source(self, B, source_v, apply_to_faces=True, device='cuda', use_cached_solvers=False):
+    def batchify_tensors_arbitrary_source(self, B, source_v, apply_to_faces=True, device='cuda'):
 
         self.v_source = source_v
 
         # assuming source_v is already in batched form
         if self.model_type == 'PoissonNet':
-            self.batchify_operators_poisson_net_arbitrary_source(B, source_v, apply_to_faces=apply_to_faces, device=device, use_cached_solvers=use_cached_solvers)
+            self.batchify_operators_poisson_net_arbitrary_source(B, source_v, apply_to_faces=apply_to_faces, device=device)
         else:
             raise NotImplementedError("model type not supported")
 
@@ -576,38 +572,10 @@ class Matern_FM_arbitrary_source(pl.LightningModule):
         return pred_v
 
     def training_step(self, batch, batch_idx):
-        if self.use_cached_solvers:
-            if self.screened_solver_for_x0:
-                # move old solvers back to cpu
-                if self.solver is not None:
-                    for solver in self.solver:
-                        solver.to_cpu()
-                if self.solver_screened is not None:
-                    for solver in self.solver_screened:
-                        solver.to_cpu()
-                (source_v, deformed_v, _,), solvers, solvers_screened = batch
-                for i in range(len(solvers)):
-                    solvers[i].to_gpu()
-                for i in range(len(solvers_screened)):
-                    solvers_screened[i].to_gpu()
-                self.batchify_tensors_arbitrary_source(source_v.shape[0], source_v, apply_to_faces=False, device=deformed_v.device, use_cached_solvers=True)
-                self.solver = solvers
-                self.solver_screened = solvers_screened
-            else:
-                # move old solvers back to cpu
-                if self.solver is not None:
-                    for solver in self.solver:
-                        solver.to_cpu()
-                (source_v, deformed_v, _,), solvers = batch
-                for i in range(len(solvers)):
-                    solvers[i].to_gpu()
-                self.batchify_tensors_arbitrary_source(source_v.shape[0], source_v, apply_to_faces=False, device=deformed_v.device, use_cached_solvers=True)
-                self.solver = solvers
-        else:
-            source_v, deformed_v, _ = batch
-            self.batchify_tensors_arbitrary_source(source_v.shape[0], source_v, apply_to_faces=False, device=deformed_v.device, use_cached_solvers=False)
-            if self.screened_solver_for_x0:
-                self.solver_screened = construct_screened_solvers(self.v_source, self.source_faces_batch, screening_term=self.screening_term, high_precision=True, to_cpu=False)        
+        source_v, deformed_v, _ = batch
+        self.batchify_tensors_arbitrary_source(source_v.shape[0], source_v, apply_to_faces=False, device=deformed_v.device)
+        if self.screened_solver_for_x0:
+            self.solver_screened = construct_screened_solvers(self.v_source, self.source_faces_batch, screening_term=self.screening_term, high_precision=True)        
         
         if self.center_target_data:
             # mass weighted centering
@@ -638,10 +606,10 @@ class Matern_FM_arbitrary_source(pl.LightningModule):
         self.base_model.eval()
 
         # batchify tensors and operators
-        self.batchify_tensors_arbitrary_source(source_v.shape[0], source_v, apply_to_faces=True, device=device, use_cached_solvers=False)
+        self.batchify_tensors_arbitrary_source(source_v.shape[0], source_v, apply_to_faces=True, device=device)
 
         if self.screened_solver_for_x0:
-            self.solver_screened = construct_screened_solvers(self.v_source, self.source_faces_batch, screening_term=self.screening_term, high_precision=True, to_cpu=False)
+            self.solver_screened = construct_screened_solvers(self.v_source, self.source_faces_batch, screening_term=self.screening_term, high_precision=True)
 
         num_samples = source_v.shape[0]
 
@@ -684,12 +652,7 @@ class Matern_FM_arbitrary_source(pl.LightningModule):
 
                 for i in range(num_samples):
                     mesh = trimesh.Trimesh(vertices=sol[i].cpu().detach().numpy(), faces=self.source_faces.numpy(), process=False)
-                    mesh.export(os.path.join(saving_dir_deformed, 'deformed_mesh_%04d_%04d.obj' % (i, repeat_idx)))
-
-        if self.screened_solver_for_x0:
-            # move solvers back to cpu
-            for s in self.solver_screened:
-                s.to_cpu()
+                    mesh.export(os.path.join(saving_dir_deformed, 'deformed_mesh_%04d_%04d.obj' % (i, repeat_idx)))            
 
         self.base_model.train()
 
@@ -721,14 +684,14 @@ class Matern_FM_arbitrary_source(pl.LightningModule):
                 self.source_faces_batch = self.source_faces.unsqueeze(0)
 
 
-                self.batchify_tensors_arbitrary_source(source_vertices.shape[0], source_vertices, device=device, use_cached_solvers=False)
+                self.batchify_tensors_arbitrary_source(source_vertices.shape[0], source_vertices, device=device)
 
                 if self.solver == []:
                     print("Warning: solvers list is empty, skipping current source mesh")
                     continue
 
                 if self.screened_solver_for_x0:
-                    self.solver_screened = construct_screened_solvers(self.v_source, self.source_faces_batch, screening_term=self.screening_term, high_precision=True, to_cpu=False)
+                    self.solver_screened = construct_screened_solvers(self.v_source, self.source_faces_batch, screening_term=self.screening_term, high_precision=True)
 
 
                 if init_x0 is not None:
@@ -757,11 +720,6 @@ class Matern_FM_arbitrary_source(pl.LightningModule):
 
                     mesh = trimesh.Trimesh(vertices=sol[0].cpu().detach().numpy(), faces=self.source_faces.cpu().numpy(), process=False)
                     mesh.export(os.path.join(saving_dir_deformed, '%s_%04d_%04d.obj' % (filename, sample_idx, repeat_idx)))
-
-                if self.screened_solver_for_x0:
-                    # move solvers back to cpu and delete them
-                    for s in self.solver_screened:
-                        s.to_cpu()
 
 
 
@@ -813,28 +771,27 @@ class Eigenvec_Predictor(pl.LightningModule):
         # other configs
         self.config = config
 
-        self.use_cached_solvers = config.dataset.get('cache_solvers', False) and not single_source
         self.solver = None
 
         self.mass_weighted_mse = config.train.loss_weights.mass_weighted
 
-    def batchify_operators_poisson_net_arbitrary_source(self, B, source_v, apply_to_faces=True, device='cuda', use_cached_solvers=False):
+    def batchify_operators_poisson_net_arbitrary_source(self, B, source_v, apply_to_faces=True, device='cuda'):
 
         if apply_to_faces or self.source_faces_batch.shape[0] != B:
             self.source_faces_batch = batchify_tensor(self.source_faces, B).to(device)
 
         # convert tensors to batched versions
         self.vertex_mass, self.solver, self.G, self.M = construct_mesh_operators(
-            source_v, self.source_faces_batch, high_precision=True, create_solvers=not use_cached_solvers
+            source_v, self.source_faces_batch, high_precision=True
         )
 
-    def batchify_tensors_arbitrary_source(self, B, source_v, apply_to_faces=True, device='cuda', use_cached_solvers=False):
+    def batchify_tensors_arbitrary_source(self, B, source_v, apply_to_faces=True, device='cuda'):
 
         self.v_source = source_v
 
         # assuming source_v is already in batched form
         if self.model_type == 'PoissonNet':
-            self.batchify_operators_poisson_net_arbitrary_source(B, source_v, apply_to_faces=apply_to_faces, device=device, use_cached_solvers=use_cached_solvers)
+            self.batchify_operators_poisson_net_arbitrary_source(B, source_v, apply_to_faces=apply_to_faces, device=device)
         else:
             raise NotImplementedError("model type not supported")
 
@@ -874,19 +831,8 @@ class Eigenvec_Predictor(pl.LightningModule):
 
 
     def training_step(self, batch, batch_idx):
-        if self.use_cached_solvers:
-            # move old solvers back to cpu
-            if self.solver is not None:
-                for solver in self.solver:
-                    solver.to_cpu()
-            (source_v, deformed_v, _), solvers = batch
-            for i in range(len(solvers)):
-                solvers[i].to_gpu()
-            self.batchify_tensors_arbitrary_source(source_v.shape[0], source_v, apply_to_faces=False, device=deformed_v.device, use_cached_solvers=True)
-            self.solver = solvers
-        else:
-            source_v, deformed_v, _ = batch
-            self.batchify_tensors_arbitrary_source(source_v.shape[0], source_v, apply_to_faces=False, device=deformed_v.device, use_cached_solvers=False)
+        source_v, deformed_v, _ = batch
+        self.batchify_tensors_arbitrary_source(source_v.shape[0], source_v, apply_to_faces=False, device=deformed_v.device)
         if self.target_centering:
             deformed_v = center_around_zeros_mass_weighted(deformed_v, self.vertex_mass, dimension=1)
 
