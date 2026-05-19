@@ -1,0 +1,129 @@
+group: MOYO_arbitrary_source
+exp_name: exp1
+
+render_results: True
+enable_progress_bar: True
+
+manual_seed: 42
+
+model:
+  type: Matern_FM_arbitrary_source
+  model_type: PoissonNet
+
+  outputs_at: vertices
+
+  x0_dist: 
+    type: 'poisson_solve'
+    sigma: 5.0
+    screened_solver_for_x0: True
+    screening_term: 100.0
+
+  in_dim: 3
+  out_dim: 6
+  hidden_dim: 128
+  num_blocks: 5
+
+  head_type: njf
+  use_source_xyz_grad: True
+
+  use_extra_features: True
+  extra_features: ['v_source', 't']
+
+  use_predicted_eigenvecs: True
+
+  extra_configs:
+    dropout_p: 0.0
+    drop_path: 0.0
+    mlp_norm: False
+    inner_prod_features: False
+    cmlp_modulate: True
+    cmlp_nlayers: 3
+    cmlp_dropout: 0.0
+
+  eigenvecs_predictor:
+    # path to the checkpoint of the pretrained eigenvecs predictor model
+    checkpoint_path: ckpts/smpl_eigenvecs_predictor.ckpt
+    in_dim: 3
+    out_dim: 64
+    hidden_dim: 128
+    num_blocks: 3
+    head_type: 'linear'
+    outputs_at: 'vertices'
+
+    extra_configs:
+      dropout_p: 0.0
+      drop_path: 0.0
+      mlp_norm: False
+      inner_prod_features: False
+      cmlp_modulate: True
+      cmlp_nlayers: 3
+      cmlp_dropout: 0.0
+
+dataset:
+  name: arbitrary_source
+  data_file: data/moyo_arbitrary_source.pt
+
+  use_subset: False
+  subset_percentage: 0.001
+
+  cache_solvers: True
+  cache_segments_num_samples: 3000
+
+  cache_screened_solvers: True
+  screening_term: 100.0
+
+  use_data_augmentation: True
+
+
+train:
+  lr: 0.0005
+  iterations: 240000
+  batch_size: 32
+
+  num_workers: 0
+  # accumulate_grad_batches: 1
+
+  lr_scheduler:
+    type: MultiStepLR
+    milestones: [40000, 160000]
+    gamma: 0.2
+
+  log_freq: 100
+  save_every_n_steps: 10000
+
+  gradient_clipping:
+    enabled: True
+    max_norm: 1.0
+
+  loss_type: NJF_loss
+  loss_weights:
+    lambda_v: 1.0
+    lambda_g: 1.0
+    mass_weighted: True
+
+  center_target_data: True
+
+
+evaluate:
+  num_samples: 5
+  evaluate_every_n_steps: 20000
+
+  save_final_result_evolution: True
+
+render:
+  fixed_camera_location: [1.0, 1.0, 1.0]
+  
+  trajectory:
+    R: 2.5
+    h: 1.5
+    N: 180
+
+ode_solver:
+  method: 'midpoint'
+
+  step_size: 0.05
+
+wandb: 
+  enabled: False
+  project: Matern_FM
+  entity: tianshu-kuai

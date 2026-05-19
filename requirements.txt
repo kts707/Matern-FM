@@ -1,0 +1,15 @@
+numpy==1.26.4
+trimesh==4.6.4
+meshio
+matplotlib
+pytorch-lightning==2.5.5
+omegaconf
+wandb==0.19.10
+scikit-learn==1.6.1
+robust-laplacian==1.0.0
+potpourri3d==1.2.1
+torchdiffeq==0.2.5
+libigl==2.4.1
+polyscope==2.5.0
+imageio
+imageio-ffmpeg
