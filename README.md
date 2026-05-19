@@ -31,7 +31,7 @@ pip install ./cholespy
 rm -rf ./cholespy
 ```
 
-Note that we install the [custom version](https://github.com/kts707/cholespy) of the cholespy package above. It supports caching the cholespy solvers of all meshes in the dataset before training. This avoids repeatedly creating solvers on the fly during training (can significantly reduce total training time). If you wish to use the [official cholespy package](https://github.com/rgl-epfl/cholespy), then use code in [official_cholespy](https://github.com/kts707/Matern-FM/tree/official_cholespy) branch. 
+Note that we install the [custom version](https://github.com/kts707/cholespy) of the cholespy package above. It supports caching the cholespy solvers of all source meshes in the dataset before training. This avoids repeatedly creating solvers on the fly during training (can significantly reduce total training time in arbitrary source setup). If you wish to use the [official cholespy package](https://github.com/rgl-epfl/cholespy), then use code in [official_cholespy](https://github.com/kts707/Matern-FM/tree/official_cholespy) branch. 
 
 ## Matérn noise sampling
 We provide stand-alone example scripts for sampling Matérn noise on a triangle mesh.
