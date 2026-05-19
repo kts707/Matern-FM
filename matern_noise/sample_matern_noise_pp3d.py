@@ -15,7 +15,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
-def construct_screened_solvers(verts_np, faces_np, screening_term=0, high_precision=False, device='cuda'):
+def construct_screened_solvers(verts_np, faces_np, screening_term=0, device='cuda'):
     '''
     Creates the following operators for a mesh. Uses PyTorch CUDA extension.
     - solver:       [B,]        list of Cholesky solvers for mesh's cotangent Laplacian
@@ -138,8 +138,7 @@ def main():
     solver, vertex_mass = construct_screened_solvers(
         verts_np=verts_np,
         faces_np=faces_np,
-        screening_term=screening_term,
-        high_precision=True
+        screening_term=screening_term
     )
 
     x0 = sample_matern_noise(
