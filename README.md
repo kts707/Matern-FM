@@ -1,6 +1,6 @@
 # Matérn Noise for Triangulation-Agnostic Flow Matching on Meshes
 
-### [[Project Page]](https://matern-fm.github.io/) / [[arXiv]](link) / [[Data]](https://udemontreal-my.sharepoint.com/:f:/g/personal/tianshu_kuai_umontreal_ca/IgDTIysjX7jBQa3RzqXL1TsBAePI1R2l0EUxTkIKThh3CKE?e=bCMkX2) / [[Data Generation Code]](https://github.com/kts707/matern-fm-data)
+### [[Project Page]](https://matern-fm.github.io/) / [[arXiv]](https://arxiv.org/abs/2605.19305) / [[Data]](https://udemontreal-my.sharepoint.com/:f:/g/personal/tianshu_kuai_umontreal_ca/IgDTIysjX7jBQa3RzqXL1TsBAePI1R2l0EUxTkIKThh3CKE?e=bCMkX2) / [[Data Generation Code]](https://github.com/kts707/matern-fm-data)
 
 ![](./assets/teaser.png)
 
