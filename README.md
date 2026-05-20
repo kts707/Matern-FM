@@ -113,11 +113,14 @@ The neural network architecture code was adapted from [PoissonNet](https://githu
 If you find our work useful in your research, please consider citing it:
 ```bibtex
 @article{kuai2026matern,
-author = {Kuai, Tianshu and Maesumi, Arman and Ritchie, Daniel and Aigerman, Noam},
-title = {Matérn Noise for Triangulation-Agnostic Flow Matching on Meshes},
-year = {2026},
-booktitle = {ACM Transactions on Graphics (Proceedings of SIGGRAPH 2026)},
-publisher = {Association for Computing Machinery}
+  author    = {Kuai, Tianshu and Maesumi, Arman and Ritchie, Daniel and Aigerman, Noam},
+  title     = {Matérn Noise for Triangulation-Agnostic Flow Matching on Meshes},
+  journal   = {ACM Transactions on Graphics (TOG)},
+  volume    = {45},
+  number    = {4},
+  pages     = {1--17},
+  year      = {2026},
+  publisher = {ACM New York, NY, USA}
 }
 ```
 
